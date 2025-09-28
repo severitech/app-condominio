@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app_condominio/navigation/nav.dart';
 
 class SignInPage1 extends StatefulWidget {
   const SignInPage1({super.key});
@@ -11,7 +15,51 @@ class _SignInPage1State extends State<SignInPage1> {
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
 
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  // Función para login con backend Django
+  Future<void> _login(String email, String password) async {
+    const String baseUrl = "http://192.168.1.7:8000/api/auth/login/";
+
+    try {
+      final response = await http.post(
+        Uri.parse(baseUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Ajusta a lo que devuelve tu backend
+        final token = data['access'];
+        final refresh = data['refresh'];
+
+        print('Login exitoso, access: $token');
+        print('Refresh token: $refresh');
+
+        // Guarda el access token en almacenamiento local
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('access_token', token);
+        await prefs.setString('refresh_token', refresh);
+
+        Navigator.pushReplacementNamed(context, '/navbar');
+      } else {
+        final error = jsonDecode(response.body);
+        _showError(error['message'] ?? 'Error de login');
+      }
+    } catch (e) {
+      _showError('Error de conexión: $e');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,19 +96,17 @@ class _SignInPage1State extends State<SignInPage1> {
                     ),
                     _gap(),
                     TextFormField(
+                      controller: _emailController,
                       validator: (value) {
-                        // add email validation
                         if (value == null || value.isEmpty) {
                           return 'Please enter some text';
                         }
-
                         bool emailValid = RegExp(
-                          r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+                          r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
                         ).hasMatch(value);
                         if (!emailValid) {
                           return 'Please enter a valid email';
                         }
-
                         return null;
                       },
                       decoration: const InputDecoration(
@@ -72,11 +118,11 @@ class _SignInPage1State extends State<SignInPage1> {
                     ),
                     _gap(),
                     TextFormField(
+                      controller: _passwordController,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter some text';
                         }
-
                         if (value.length < 6) {
                           return 'Password must be at least 6 characters';
                         }
@@ -137,7 +183,10 @@ class _SignInPage1State extends State<SignInPage1> {
                         ),
                         onPressed: () {
                           if (_formKey.currentState?.validate() ?? false) {
-                            /// do something
+                            _login(
+                              _emailController.text.trim(),
+                              _passwordController.text.trim(),
+                            );
                           }
                         },
                       ),

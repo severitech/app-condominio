@@ -54,7 +54,7 @@ class _NavegacionInferiorSimpleState extends State<NavegacionInferiorSimple> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline_rounded),
             activeIcon: Icon(Icons.person_rounded),
-            label: 'Notificaciones',
+            label: 'Perfil',
           ),
         ],
       ),
