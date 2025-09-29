@@ -1,4 +1,5 @@
-import 'package:app_condominio/widgets/reserva.dart';
+
+import 'package:app_condominio/reserva/reservas_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:app_condominio/screen/comunicacion_screen.dart';
 import 'package:app_condominio/screen/finanzas_screen.dart';
@@ -11,7 +12,7 @@ class _NavegacionInferiorSimpleState extends State<NavegacionInferiorSimple> {
   final List<Widget> _paginas = [
     FinanzasScreen(),
     ComunicacionScreen(),
-    ReservaScreen(),  // Aquí se agrega la pantalla de Reserva
+    MisReservasScreen(),  // Aquí se agrega la pantalla de Reserva
     NotificacionesScreen(),
   ];
 
